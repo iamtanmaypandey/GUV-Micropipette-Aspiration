@@ -15,8 +15,11 @@ from modules.rotateimg import rotateimg
 from modules.crop import crop
 from modules.rollingball import rolling_ball_filter
 from modules.removebg import removebg
-from modules.syringe import syringe
-#from modules.guv import guv
+from modules.adds import syringeauto
+from modules.getpoints import getpoint
+
+#clear system
+os.system('cls')
 
 #setting app title
 apptitle = 'MicroPipette-SMBL'
@@ -36,15 +39,7 @@ with alive_bar(len(os.listdir(path))) as bar:
         files.append(cv2.cvtColor(cv2.imread(p),cv2.COLOR_BGR2RGB))
         names.append(file)
         bar()
-print('Read successfully')
-
-#Show user the line profile at the center of image
-initfile = cv2.cvtColor(files[0],cv2.COLOR_BGR2GRAY)
-shape = initfile.shape
-#print(shape)
-start = (0,shape[0]//2)
-end = (shape[1], shape[0]//2)
-profile = profile_line(initfile, start,end,linewidth=1)
+print('\u2705 Read successfully')
 
 ifbgremo = eg.ynbox('Should we do background removal by mean method?',apptitle, ('Yes','No'))
 if ifbgremo:
@@ -57,7 +52,8 @@ if ifbgremo:
             final = removebg(rgb,gray)
             files[ind] = final
             bgsub()
-    print('Background Subtraction finished')
+    print('\u2705 Background Subtraction finished')
+ 
 
 #get rotation degree for each image    
 deg_rotation = rotateimg(files[0])
@@ -69,7 +65,9 @@ with alive_bar(len(files)) as bar2:
         img = nd.rotate(files[ind],deg_rotation)
         files[ind] = img
         bar2()
-print('Rotation Applied. Successfully :)')    
+print('\u2705 Rotation Applied. Successfully :)')    
+
+ 
 
 #Cropping window
 print('Please select the Region of Interest in next window')
@@ -83,7 +81,7 @@ with alive_bar(len(files)) as bar3:
             int(roi[0]):int(roi[0]+roi[2])
         ]
         bar3()
-print('Images Cropped Successfully :)')
+print('\u2705 Images Cropped Successfully :)')
 
 isavecrop = eg.ynbox('Save the cropped images?', apptitle, ('Yes','No'),cancel_choice='No')
 if isavecrop:
@@ -95,12 +93,36 @@ if isavecrop:
             cv2.imwrite(f'{path2save}/rbg-{names[i]}',t)
             bar4()
 
+ 
+
 #get number of rows and columns from roi
 rows = np.shape(files[0])[0]
 columns = np.shape(files[0])[1]
 
-pixlen = eg.enterbox('Enter pixel length:', apptitle)
-pixwid = eg.enterbox('Enter pixel width:', apptitle)
+pixlen = eg.enterbox('Enter pixel size in \u03BC:', apptitle)
 
-diameter_syringe,epsilon = syringe(files)
-print(diameter_syringe)
+print('Calculating r and \u0394 r')
+diameter_syringe,error,k,epsilon,axis,coords = syringeauto(files)
+print(f'Average r: {diameter_syringe/2} \n \u0394 r = {error}')
+r = diameter_syringe/2
+
+systemaxis = (coords[0][1] + coords[1][1] + coords[2][1] + coords[3][1])/4
+
+theo_xp = (coords[1][0]+coords[2][0])/2
+
+start_axis = (systemaxis,0) #(row,column)
+end_axis = (systemaxis,columns)
+
+print('Starting the calculations. \U0001F686 ')
+
+#calculate datapoints
+data_cal = getpoint(files,start_axis,end_axis,pixlen,theo_xp,r,error)
+
+print('Calculation Done. \n \u2611 \n \u2708')
+
+#ask for save locations
+path_data = eg.filesavebox('Select the location to save file',apptitle,filetypes='\*.csv')
+
+data_cal.to_csv(path_data)
+
+print('Program Completed.')
