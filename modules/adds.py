@@ -8,8 +8,9 @@ import easygui as eg
 from skimage.measure import profile_line
 import scipy
 from alive_progress import alive_bar
+import art as art
 
-apptitle = 'SMBL-MPA'
+apptitle = 'Micropipette Aspiration - SMBL'
 
 #defining helper functions
 def threshs(pts,file):
@@ -65,6 +66,7 @@ def syringeauto(files):
     files = files
     coords = getfixcoords(files[0])  #have to return the coords for system axis calculations and error also.
     os.system('cls')
+    art.tprint('MPA')
     idealdiameter, k,epsilon = calculateidealdist(coords)
     threshy, pts = threshs(coords,files[0])
     x1,x2,y1,y2 = pts[0][0],pts[1][0],pts[0][1],pts[1][1]

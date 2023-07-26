@@ -1,9 +1,16 @@
+#loading the operating system library
+import os
+import art as art
+
+os.system('cls')
+art.tprint('MPA')
+print('The Libraries are loading ..')
+
 #importing the requried files
 import numpy as np
 import matplotlib.pyplot as plt
 import easygui as eg
 import cv2
-import os
 from matplotlib.widgets import Button,Slider
 import scipy.ndimage as nd
 from alive_progress import alive_bar
@@ -18,11 +25,21 @@ from modules.removebg import removebg
 from modules.adds import syringeauto
 from modules.getpoints import getpoint
 
-#clear system
-os.system('cls')
+print('All libraries loaded :) ')
 
 #setting app title
-apptitle = 'MicroPipette-SMBL'
+apptitle = 'MicroPipette Aspiraton'
+
+#asking the system things
+user = eg.multenterbox('Enter the parameters ', apptitle, ['pixel length in detector (\u03BC) :', 'Binning Size','Objective','Magnifier'])
+pix = float(user[0])
+binning = float(user[1])
+objective = float(user[2])
+magnifier = float(user[3])
+
+#pixlen defining :
+
+pixlen = pix*binning*magnifier/objective
 
 #asking the file location
 path = eg.diropenbox('Select the directory to process', apptitle)
@@ -67,8 +84,6 @@ with alive_bar(len(files)) as bar2:
         bar2()
 print('\u2705 Rotation Applied. Successfully :)')    
 
- 
-
 #Cropping window
 print('Please select the Region of Interest in next window')
 roi = crop(files[0])
@@ -93,17 +108,12 @@ if isavecrop:
             cv2.imwrite(f'{path2save}/rbg-{names[i]}',t)
             bar4()
 
- 
-
 #get number of rows and columns from roi
 rows = np.shape(files[0])[0]
 columns = np.shape(files[0])[1]
 
-pixlen = eg.enterbox('Enter pixel size in \u03BC:', apptitle)
-
 print('Calculating r and \u0394 r')
 diameter_syringe,error,k,epsilon,axis,coords = syringeauto(files)
-print(f'Average r: {diameter_syringe/2} \n \u0394 r = {error}')
 r = diameter_syringe/2
 
 systemaxis = (coords[0][1] + coords[1][1] + coords[2][1] + coords[3][1])/4
@@ -118,11 +128,11 @@ print('Starting the calculations. \U0001F686 ')
 #calculate datapoints
 data_cal = getpoint(files,start_axis,end_axis,pixlen,theo_xp,r,error)
 
-print('Calculation Done. \n \u2611 \n \u2708')
+print('Calculation Done. \u2611 \n \u2708')
 
 #ask for save locations
 path_data = eg.filesavebox('Select the location to save file',apptitle,filetypes='\*.csv')
 
 data_cal.to_csv(path_data)
 
-print('Program Completed.')
+art.tprint('Completed.')

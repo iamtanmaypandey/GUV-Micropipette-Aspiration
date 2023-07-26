@@ -19,9 +19,9 @@ if state:
     initime = time.time_ns()
     initial = time.asctime()
     while True:
-        pressure = eg.multenterbox('Enter the parameters \n or write end to stop it.',apptitle,['LSR','CSR'])
-        if pressure[0] == 'end' or pressure[1]== 'end':
-            df = pd.DataFrame(allrows,columns=['Sno','Initial Time (s)', 'Final Time (s)','Delta T (s)','Frame No (approx)','LSR','CSR'])
+        pressure = eg.multenterbox('Enter the parameters \n or write end to stop it.',apptitle,['LSR','CSR','Voltage'])
+        if pressure[0] == 'end' or pressure[1] == 'end' or pressure[2] == 'end':
+            df = pd.DataFrame(allrows,columns=['Sno','Initial Time (s)', 'Final Time (s)','Delta T (s)','Frame No (approx)','LSR','CSR','Voltage'])
             path = eg.diropenbox('Select the directory where you want to save the csv file', apptitle)
             name = eg.enterbox('Enter the name for csv file',apptitle)
             df.to_csv(f'{path}/{name}.csv')
@@ -43,4 +43,5 @@ if state:
             row.append(frame)
             row.append(pressure[0])
             row.append(pressure[1])
+            row.append(pressure[2])
             allrows.append(row)

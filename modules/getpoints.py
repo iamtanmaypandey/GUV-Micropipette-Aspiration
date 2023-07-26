@@ -4,7 +4,8 @@ from skimage.measure import profile_line
 from scipy.signal import find_peaks
 import cv2
 from scipy.ndimage import gaussian_gradient_magnitude
-from sklearn.metrics import mean_absolute_error as mbe
+#from sklearn.metrics import mean_absolute_error as mbe
+from sklearn.metrics import mean_absolute_percentage_error as mbe
 from matplotlib.widgets import PolygonSelector
 import pandas as pd
 import easygui as eg
@@ -32,7 +33,7 @@ def getpoint(files,start,end,pix_size,theo_xp,rad,delr):
     xp = int(xp)
     with alive_bar(len(files)) as barr:
         for file in files:
-            imk = cv2.cvtColor(file,cv2.COLOR_RGB2GRAY)
+            imk = img = cv2.cvtColor(file,cv2.COLOR_RGB2GRAY)
             ret,img = cv2.threshold(img,0,250,cv2.THRESH_TOZERO+cv2.THRESH_OTSU)
             ret,img = cv2.threshold(img,ret+50,250,cv2.THRESH_TOZERO)
             prof = gaussian_gradient_magnitude(profile_line(img,start,end,linewidth=1),sigma=3)
@@ -40,17 +41,22 @@ def getpoint(files,start,end,pix_size,theo_xp,rad,delr):
             prof2 = profile_line(imk,start,end,linewidth=1)
             peaks2 = find_peaks(prof2)[0]
             
-            std = 10 #just a standard parameter for error calculation and mean
+            fig,axs = plt.subplots(1,3)
+            axs[0].imshow(imk,cmap='gray')
+            axs[1].plot(profile_line(imk,start,end,linewidth=1))
+            axs[2].plot(prof)
+            plt.show()
+            
+            std = 5 #just a standard parameter for error calculation and mean
             
             #finding xt
             xt_test = peaks[0]
-            print(xt_test)
             xt = 0
             xt_init = 0
             xt_pt = []
             xt_pd_pt = []
             for i in range(xt_test-std,xt_test+std):
-                if i in peaks2:
+                if i in peaks:
                     xt_init += 1
                     xt += i
                     xt_pt.append(i)
@@ -68,7 +74,7 @@ def getpoint(files,start,end,pix_size,theo_xp,rad,delr):
             xv_pt = []
             xv_id_pt = []
             for i in range(xv_test-std,xv_test+std):
-                if i in peaks2:
+                if i in peaks:
                     xv_init += 1
                     xv += i
                     xv_pt.append(i)
@@ -123,10 +129,17 @@ def getpoint(files,start,end,pix_size,theo_xp,rad,delr):
             
             
             #entering all data into a csv file
-            r = [xv,xv_error,xp,xp_error,xt,xt_error,R,delR,S,delS,V,delV]
+            r = [xv,xv_error,xp,xp_error,xt,xt_error,R,delR]
+            ss = [S,delS]
+            vs = [V,delV]
             for inde in range(0,len(r)):
                 r[inde] = float(r[inde])*float(pix_size)
-            
+            for inde in range(0,len(ss)):
+                val = float(ss[inde])*(float(pix_size)**2)
+                r.append(val)
+            for inde in range(0,len(vs)):
+                val = float(vs[inde])*(float(pix_size)**3)
+                r.append(val)
             netrows.append(r)
             barr()
     df = pd.DataFrame(netrows,columns=columns)
